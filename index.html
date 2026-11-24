@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Робочий простір системи БПД</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <script>
+    try {
+      if (localStorage.getItem('bpd-portal-theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  </script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="./js/tailwind-config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+  <script src="./js/auth.js"></script>
+</head>
+<body class="bg-light-background dark:bg-dark-background text-light-on-background dark:text-dark-on-background font-body antialiased transition-colors duration-surface-enter ease-surface-enter">
+
+  <!-- Fullscreen SHA-256 Auth Overlay -->
+  <div id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title" aria-describedby="auth-subtitle" class="auth-overlay fixed inset-0 z-[9999] flex items-center justify-center p-gutter-md bg-light-background/75 dark:bg-dark-background/80">
+    <div id="auth-card" class="w-full max-w-[420px] rounded-lg bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant shadow-xl overflow-hidden transition-colors duration-surface-enter ease-surface-enter">
+      <!-- Branded Top Strip -->
+      <div class="relative overflow-hidden bg-header text-on-header px-gutter-lg py-4 flex items-center gap-gutter-sm border-b border-dark-outline-variant/40">
+        <img src="./assets/header-pattern.png" alt="" aria-hidden="true" class="pointer-events-none select-none absolute right-0 top-0 h-full w-28 object-cover opacity-20">
+        <img src="./assets/logo-bpd.svg" alt="Безоплатна правнича допомога" class="relative h-6 w-auto shrink-0">
+      </div>
+
+      <!-- Auth Form Body -->
+      <div class="p-gutter-lg flex flex-col gap-gutter-lg">
+        <div class="flex flex-col items-center text-center gap-gutter-sm">
+          <div class="w-12 h-12 rounded-md bg-light-primary-container dark:bg-dark-primary-container text-light-on-primary-container dark:text-dark-on-primary-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]" aria-hidden="true">lock</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <h2 id="auth-title" class="font-headline text-headline-lg text-light-on-surface dark:text-dark-on-surface text-balance">Робочий портал БПД</h2>
+            <p id="auth-subtitle" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty">Введіть пароль для доступу</p>
+          </div>
+        </div>
+
+        <form id="auth-form" novalidate class="flex flex-col gap-gutter-md">
+          <div class="flex flex-col gap-gutter-xs">
+            <label for="auth-password" class="font-label text-label-md text-light-on-surface-variant dark:text-dark-on-surface-variant">Пароль доступу</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[20px] text-light-outline dark:text-dark-outline absolute left-3.5 pointer-events-none" aria-hidden="true">key</span>
+              <input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Введіть пароль..." class="w-full pl-10 pr-11 py-2.5 rounded bg-light-surface-container-low dark:bg-dark-surface-container-low border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface dark:text-dark-on-surface placeholder:text-light-outline dark:placeholder:text-dark-outline font-body text-body-md focus:outline-none focus:border-light-primary dark:focus:border-dark-primary focus:ring-1 focus:ring-light-primary dark:focus:ring-dark-primary disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-state-change ease-state-change">
+              <button id="toggle-password-btn" type="button" aria-label="Показати пароль" aria-pressed="false" class="absolute right-2 inline-flex items-center justify-center w-8 h-8 rounded text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-state-change ease-state-change">
+                <span id="toggle-password-icon" class="material-symbols-outlined text-[20px]" aria-hidden="true">visibility</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="auth-message" role="alert" aria-live="polite" class="hidden items-start gap-gutter-sm px-3.5 py-2.5 rounded bg-bean-red/10 border border-bean-red/30 text-bean-red font-body text-body-md">
+            <span id="auth-message-icon" class="material-symbols-outlined text-[18px] mt-0.5 shrink-0" aria-hidden="true">error</span>
+            <span id="auth-message-text" class="text-pretty"></span>
+          </div>
+
+          <button id="auth-submit" type="submit" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">login</span>
+            <span>Увійти</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portal Application Shell -->
+  <div id="portal-app" class="min-h-screen flex flex-col">
+
+    <!-- Top App Bar -->
+    <header class="relative overflow-hidden w-full bg-header text-on-header border-b border-dark-outline-variant/40">
+      <img src="./assets/header-pattern.png" alt="" aria-hidden="true" class="hidden md:block pointer-events-none select-none absolute right-0 top-0 h-full w-44 object-cover opacity-25">
+      <div class="relative max-w-[1140px] mx-auto px-gutter-lg py-5 flex flex-wrap items-center justify-between gap-gutter-md">
+        <div class="flex flex-wrap items-center gap-gutter-md min-w-0">
+          <img src="./assets/logo-bpd.svg" alt="Безоплатна правнича допомога" class="h-8 w-auto shrink-0">
+          <div class="flex flex-col gap-0.5 min-w-0 md:border-l md:border-on-header/25 md:pl-gutter-md">
+            <h1 class="font-headline text-headline-lg text-on-header text-balance" data-design-text-token="headline-lg">Робочий простір системи БПД</h1>
+            <p class="font-body text-body-md text-header-muted text-pretty" data-design-text-token="body-md">Єдиний портал автоматизації документообігу та тестування працівників</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-gutter-sm shrink-0">
+          <button id="theme-toggle" type="button" data-component-id="button-theme-toggle" data-component-type="button" data-component-variant="with-icon" aria-pressed="false" class="inline-flex items-center gap-gutter-sm px-gutter-md py-2 rounded-full bg-on-header/10 hover:bg-on-header/20 border border-on-header/20 text-on-header font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header shrink-0">
+            <span id="theme-icon" class="material-symbols-outlined text-[18px]" aria-hidden="true">dark_mode</span>
+            <span id="theme-label" data-design-text-token="label-md">Темна тема</span>
+          </button>
+
+          <button id="logout-btn" type="button" data-component-id="button-logout" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center gap-gutter-sm px-gutter-md py-2 rounded-full bg-on-header/10 hover:bg-on-header/20 border border-on-header/20 text-on-header font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header shrink-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
+            <span data-design-text-token="label-md">Вийти</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-[1140px] mx-auto px-gutter-lg py-section flex flex-col gap-gutter-xl">
+
+      <!-- Search and Category Filter Bar -->
+      <section aria-label="Пошук та фільтрація інструментів" class="flex flex-col md:flex-row md:items-center justify-between gap-gutter-md">
+        <!-- Searchbar -->
+        <form id="tool-search-form" data-component-id="searchbar-standard" data-component-type="searchbar" data-component-variant="standard" role="search" class="relative flex items-center w-full md:max-w-sm">
+          <span class="material-symbols-outlined text-[20px] text-light-on-surface-variant dark:text-dark-on-surface-variant absolute left-3.5 pointer-events-none" aria-hidden="true">search</span>
+          <input id="tool-search-input" type="search" aria-label="Пошук інструменту" placeholder="Пошук інструменту..." class="w-full pl-10 pr-4 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface dark:text-dark-on-surface placeholder:text-light-outline dark:placeholder:text-dark-outline font-body text-body-md focus:outline-none focus:border-light-primary dark:focus:border-dark-primary focus:ring-1 focus:ring-light-primary dark:focus:ring-dark-primary transition-colors duration-state-change ease-state-change">
+          <button type="submit" aria-label="Знайти" class="sr-only">Знайти</button>
+        </form>
+
+        <!-- Filter Chips -->
+        <div role="group" aria-label="Категорії інструментів" class="flex flex-wrap items-center gap-gutter-sm">
+          <button type="button" data-filter="all" data-component-id="chip-action" data-component-type="chip" data-component-variant="filter" aria-pressed="true" class="filter-chip inline-flex items-center justify-center px-gutter-md py-2 rounded-full bg-light-primary dark:bg-dark-primary text-light-on-primary dark:text-dark-on-primary font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary">
+            <span data-design-text-token="label-md">Усі</span>
+          </button>
+
+          <button type="button" data-filter="Документообіг" data-component-id="chip-filter-unselected" data-component-type="chip" data-component-variant="filter" aria-pressed="false" class="filter-chip inline-flex items-center justify-center px-gutter-md py-2 rounded-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary">
+            <span data-design-text-token="label-md">Документообіг</span>
+          </button>
+
+          <button type="button" data-filter="Діловодство" data-component-id="chip-filter-unselected" data-component-type="chip" data-component-variant="filter" aria-pressed="false" class="filter-chip inline-flex items-center justify-center px-gutter-md py-2 rounded-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary">
+            <span data-design-text-token="label-md">Діловодство</span>
+          </button>
+
+          <button type="button" data-filter="Оцінювання" data-component-id="chip-filter-unselected" data-component-type="chip" data-component-variant="filter" aria-pressed="false" class="filter-chip inline-flex items-center justify-center px-gutter-md py-2 rounded-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary">
+            <span data-design-text-token="label-md">Оцінювання</span>
+          </button>
+
+          <button type="button" data-filter="Сервіси" data-component-id="chip-filter-unselected" data-component-type="chip" data-component-variant="filter" aria-pressed="false" class="filter-chip inline-flex items-center justify-center px-gutter-md py-2 rounded-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary">
+            <span data-design-text-token="label-md">Сервіси</span>
+          </button>
+
+          <button type="button" data-filter="Навчання" data-component-id="chip-filter-unselected" data-component-type="chip" data-component-variant="filter" aria-pressed="false" class="filter-chip inline-flex items-center justify-center px-gutter-md py-2 rounded-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary">
+            <span data-design-text-token="label-md">Навчання</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 3-Column Service Cards Grid -->
+      <section aria-label="Доступні інструменти">
+        <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter-lg items-stretch">
+
+          <!-- Card 1 -->
+          <article data-category="Документообіг" data-search="Генератор документів на БВПД Генератор документів для прийняття заяви на БВПД Формування комплекту документів під час приймання звернення про надання безоплатної вторинної правничої допомоги Документообіг" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container flex items-center justify-center shrink-0">
+                  <img src="./assets/icon-doc-generator.svg" alt="" aria-hidden="true" class="w-6 h-6 dark:invert opacity-90">
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДОКУМЕНТООБІГ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Генератор документів для прийняття заяви на БВПД</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Формування комплекту документів під час приймання звернення про надання безоплатної вторинної правничої допомоги.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://visperin89-glitch.github.io/generator_bvpd/" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 2 -->
+          <article data-category="Діловодство" data-search="Генератор титульного листа досьє Швидке створення та оформлення титульного аркуша ДОСЬЄ за встановленими вимогами до оформлення справ Діловодство" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container flex items-center justify-center shrink-0">
+                  <img src="./assets/icon-dossier.svg" alt="" aria-hidden="true" class="w-6 h-6 dark:invert opacity-90">
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДІЛОВОДСТВО</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Генератор титульного листа досьє</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Швидке створення та оформлення титульного аркуша («ДОСЬЄ») за встановленими вимогами до оформлення справ.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://visperin89-glitch.github.io/titylka/" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 3 -->
+          <article data-category="Оцінювання" data-search="Портал тестування юристів БПД Тестування працівників системи БПД Інтерактивний портал перевірки знань працівників бюро правничої допомоги з формуванням результатів Оцінювання" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container flex items-center justify-center shrink-0">
+                  <img src="./assets/icon-testing.svg" alt="" aria-hidden="true" class="w-6 h-6 dark:invert opacity-90">
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ОЦІНЮВАННЯ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Тестування працівників системи БПД</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Інтерактивний портал перевірки знань працівників бюро правничої допомоги з формуванням результатів.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://visperin89-glitch.github.io/test_legal_bpd/" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 4 -->
+          <article data-category="Діловодство" data-search="Зразки кадрових заяв та службових листів шаблони заяв подання кореспонденція Діловодство" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">description</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДІЛОВОДСТВО</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Зразки кадрових заяв та службових листів</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Готові шаблони кадрових заяв, подань та службової кореспонденції для оформлення документів.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://drive.google.com/drive/folders/1q7dM8XI5oWc7Ehu3pdicGmumM7-lFy4Q" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 5 -->
+          <article data-category="Діловодство" data-search="Журнал реєстрації звернень про отримання БПД Одеського відділу 2026 облік реєстрація звернень Діловодство" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">menu_book</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДІЛОВОДСТВО</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Журнал реєстрації звернень про отримання БПД Одеського відділу 2026</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Електронний облік і реєстрація звернень громадян про надання безоплатної правничої допомоги.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://docs.google.com/spreadsheets/d/1QFF_DhAs30d5awScTwhO2kLLR6oaTQd_m6QXRnG4yF0/edit?hl=uk&amp;gid=0#gid=0" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 6 -->
+          <article data-category="Оцінювання" data-search="Щомісячне обґрунтування юриста Одеського відділу KPI показники ефективності звітність Оцінювання" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">bar_chart</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ОЦІНЮВАННЯ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Щомісячне обґрунтування юриста Одеського відділу (KPI)</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Подання щомісячної звітності та обґрунтування показників ефективності роботи фахівця.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSe3Gx64-IlxA64pL_w9lZ-yMnt4lTf7B3vMg03OozV_6IvREw/viewform" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 7 -->
+          <article data-category="Сервіси" data-search="GLPI вирішення проблем з КІАС веб сторінка електрона пошта технічні проблеми підтримка Сервіси" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">support_agent</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">СЕРВІСИ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">GLPI (вирішення проблем з КІАС, веб сторінка, електрона пошта та інші технічні проблеми)</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Служба технічної підтримки для подання заявок щодо роботи КІАС, сайту, пошти та обладнання.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://glpi.legalaid.gov.ua" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 8 -->
+          <article data-category="Документообіг" data-search="АСКОД електронний документообіг погодження підписання Документообіг" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">mark_email_read</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДОКУМЕНТООБІГ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">АСКОД (електронний документообіг)</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Система електронного документообігу для погодження, підписання та обліку службових документів.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://sed2624.legalaid.gov.ua/askod/Loginv4.aspx" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 9 -->
+          <article data-category="Діловодство" data-search="Журнал обліку УПП на виконанні юристів Одеського відділу угоди контроль Діловодство" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">assignment</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДІЛОВОДСТВО</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Журнал обліку УПП на виконанні юристів Одеського відділу</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Контроль та облік угод про правничу допомогу, що перебувають у виконанні юристів відділу.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://docs.google.com/spreadsheets/d/13uirIgE5iyoUFhP7Gw0W7NXwF128fDog/edit?gid=2072787601#gid=2072787601" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 10 -->
+          <article data-category="Діловодство" data-search="Журнал прийому за попереднім записом Одеський відділ графік запис громадян Діловодство" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">event_available</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДІЛОВОДСТВО</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Журнал прийому за попереднім записом Одеський відділ</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Планування та фіксація графіка особистого прийому громадян за попереднім записом.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://docs.google.com/spreadsheets/d/1Pp8t4O04-P8EjJYwlp-VbYSFilzJPaLnECbhHI577qo/edit?gid=1988299375#gid=1988299375" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 11 -->
+          <article data-category="Сервіси" data-search="КІАС комплексна інформаційно аналітична система облік справ доручення Сервіси" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">hub</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">СЕРВІСИ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">КІАС</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Комплексна інформаційно-аналітична система обліку справ, доручень та звітності БПД.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://kias.legalaid.gov.ua" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 12 -->
+          <article data-category="Сервіси" data-search="Електронна пошта корпоративна пошта листування Сервіси" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">mail</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">СЕРВІСИ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Електронна пошта</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Корпоративна електронна пошта для службового листування та обміну документами.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://mail.legalaid.gov.ua/mail/" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 13 -->
+          <article data-category="Сервіси" data-search="Google Drive одеського відділу хмарне сховище файли документи Сервіси" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">cloud_done</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">СЕРВІСИ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Google Drive одеського відділу</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Спільне хмарне сховище робочих документів, реєстрів і матеріалів Одеського відділу.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://drive.google.com/drive/u/2/my-drive" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 14 -->
+          <article data-category="Документообіг" data-search="Сервіс перевірки електронного підпису КЕП ЕЦП підпис Документообіг" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">verified_user</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">ДОКУМЕНТООБІГ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Сервіс перевірки електронного підпису</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Перевірка дійсності кваліфікованого електронного підпису (КЕП) та цілісності файлів.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://czo.gov.ua/verify" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 15 -->
+          <article data-category="Навчання" data-search="Платформа правових консультацій WikiLegalAid довідник консультації Навчання" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">balance</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">НАВЧАННЯ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Платформа правових консультацій WikiLegalAid</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Довідково-інформаційна база правових консультацій, алгоритмів дій та судової практики.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://legalaid.wiki/index.php/Головна_сторінка" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+          <!-- Card 16 -->
+          <article data-category="Навчання" data-search="Платформа дистанційного навчання системи безоплатної правничої допомоги курси вебінари Навчання" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px]" aria-hidden="true">school</span>
+                </div>
+                <span class="font-label text-label-sm uppercase tracking-wider px-3 py-1 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="label-sm">НАВЧАННЯ</span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Платформа дистанційного навчання системи безоплатної правничої допомоги</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Онлайн-курси, вебінари та навчальні програми для підвищення кваліфікації працівників БПД.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="https://academy.legalaid.gov.ua" target="_blank" rel="noopener noreferrer" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити інструмент</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_outward</span>
+              </a>
+            </footer>
+          </article>
+
+        </div>
+
+        <!-- Empty search/filter state -->
+        <div id="empty-state" class="hidden py-section text-center flex flex-col items-center gap-gutter-sm">
+          <span class="material-symbols-outlined text-[32px] text-light-outline dark:text-dark-outline" aria-hidden="true">search_off</span>
+          <p class="font-body text-body-lg text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-lg">Інструментів за вашим запитом не знайдено.</p>
+          <button id="reset-filters-btn" type="button" class="mt-1 px-gutter-md py-2 rounded-full bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface dark:text-dark-on-surface font-label text-label-md hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high transition-colors duration-state-change ease-state-change">
+            <span data-design-text-token="label-md">Скинути фільтри</span>
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Minimalist Centered Footer -->
+    <footer class="w-full border-t border-light-outline-variant dark:border-dark-outline-variant mt-auto">
+      <div class="max-w-[1140px] mx-auto px-gutter-lg py-gutter-lg text-center">
+        <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Портал інструментів автоматизації роботи бюро правничої допомоги</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="./js/portal.js"></script>
+</body>
+</html>

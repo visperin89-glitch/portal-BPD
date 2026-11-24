@@ -1,0 +1,64 @@
+.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  line-height: 1 !important;
+  box-sizing: content-box;
+  overflow: hidden;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+}
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 1;
+  transition: opacity 250ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.auth-overlay.is-hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
+html.bpd-authenticated #auth-overlay {
+  display: none;
+}
+
+html:not(.bpd-authenticated) body {
+  overflow: hidden;
+}
+
+@keyframes auth-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-6px);
+  }
+  40%, 80% {
+    transform: translateX(6px);
+  }
+}
+
+.auth-shake {
+  animation: auth-shake 320ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-overlay {
+    transition: none;
+  }
+  .auth-shake {
+    animation: none;
+  }
+}
