@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Аналітичний дашборд Одеського відділу БПД (2026)</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <script>
+    try {
+      if (localStorage.getItem('bpd-portal-theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  </script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="./js/tailwind-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+  <script src="./js/auth.js"></script>
+</head>
+<body class="bg-light-background dark:bg-dark-background text-light-on-background dark:text-dark-on-background font-body antialiased transition-colors duration-surface-enter ease-surface-enter">
+
+  <!-- Fullscreen SHA-256 Auth Overlay -->
+  <div id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title" aria-describedby="auth-subtitle" class="auth-overlay fixed inset-0 z-[9999] flex items-center justify-center p-gutter-md bg-light-background/75 dark:bg-dark-background/80">
+    <div id="auth-card" class="w-full max-w-[420px] rounded-lg bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant shadow-xl overflow-hidden transition-colors duration-surface-enter ease-surface-enter">
+      <div class="relative overflow-hidden bg-header text-on-header px-gutter-lg py-4 flex items-center gap-gutter-sm border-b border-dark-outline-variant/40">
+        <img src="./assets/header-pattern.png" alt="" aria-hidden="true" class="pointer-events-none select-none absolute right-0 top-0 h-full w-28 object-cover opacity-20">
+        <img src="./assets/logo-bpd.svg" alt="Безоплатна правнича допомога" class="relative h-6 w-auto shrink-0">
+      </div>
+
+      <div class="p-gutter-lg flex flex-col gap-gutter-lg">
+        <div class="flex flex-col items-center text-center gap-gutter-sm">
+          <div class="w-12 h-12 rounded-md bg-light-primary-container dark:bg-dark-primary-container text-light-on-primary-container dark:text-dark-on-primary-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]" aria-hidden="true">lock</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <h2 id="auth-title" class="font-headline text-headline-lg text-light-on-surface dark:text-dark-on-surface text-balance">Робочий портал БПД</h2>
+            <p id="auth-subtitle" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty">Введіть пароль для доступу</p>
+          </div>
+        </div>
+
+        <form id="auth-form" novalidate class="flex flex-col gap-gutter-md">
+          <div class="flex flex-col gap-gutter-xs">
+            <label for="auth-password" class="font-label text-label-md text-light-on-surface-variant dark:text-dark-on-surface-variant">Пароль доступу</label>
+            <div class="relative flex items-center">
+              <span class="material-symbols-outlined text-[20px] text-light-outline dark:text-dark-outline absolute left-3.5 pointer-events-none" aria-hidden="true">key</span>
+              <input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Введіть пароль..." class="w-full pl-10 pr-11 py-2.5 rounded bg-light-surface-container-low dark:bg-dark-surface-container-low border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface dark:text-dark-on-surface placeholder:text-light-outline dark:placeholder:text-dark-outline font-body text-body-md focus:outline-none focus:border-light-primary dark:focus:border-dark-primary focus:ring-1 focus:ring-light-primary dark:focus:ring-dark-primary disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-state-change ease-state-change">
+              <button id="toggle-password-btn" type="button" aria-label="Показати пароль" aria-pressed="false" class="absolute right-2 inline-flex items-center justify-center w-8 h-8 rounded text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-state-change ease-state-change">
+                <span id="toggle-password-icon" class="material-symbols-outlined text-[20px]" aria-hidden="true">visibility</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="auth-message" role="alert" aria-live="polite" class="hidden items-start gap-gutter-sm px-3.5 py-2.5 rounded bg-bean-red/10 border border-bean-red/30 text-bean-red font-body text-body-md">
+            <span id="auth-message-icon" class="material-symbols-outlined text-[18px] mt-0.5 shrink-0" aria-hidden="true">error</span>
+            <span id="auth-message-text" class="text-pretty"></span>
+          </div>
+
+          <button id="auth-submit" type="submit" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">login</span>
+            <span>Увійти</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portal Application Shell -->
+  <div id="portal-app" class="min-h-screen flex flex-col">
+
+    <!-- Top App Bar (Shared Portal Shell) -->
+    <header class="relative overflow-hidden w-full bg-header text-on-header border-b border-dark-outline-variant/40">
+      <img src="./assets/header-pattern.png" alt="" aria-hidden="true" class="hidden md:block pointer-events-none select-none absolute right-0 top-0 h-full w-44 object-cover opacity-25">
+      <div class="relative max-w-7xl mx-auto px-gutter-md md:px-gutter-lg lg:px-gutter-xl py-4 flex flex-wrap items-center justify-between gap-gutter-md">
+        <div class="flex flex-wrap items-center gap-gutter-md min-w-0">
+          <a href="./index.html" class="shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header rounded">
+            <img src="./assets/logo-bpd.svg" alt="Безоплатна правнича допомога" class="h-8 w-auto">
+          </a>
+          <div class="flex flex-col gap-0.5 min-w-0 md:border-l md:border-on-header/25 md:pl-gutter-md">
+            <span class="font-headline text-headline-lg text-on-header text-balance" data-design-text-token="headline-lg">Робочий простір системи БПД</span>
+            <span class="font-body text-body-md text-header-muted text-pretty" data-design-text-token="body-md">Єдиний портал автоматизації документообігу та тестування працівників</span>
+          </div>
+        </div>
+
+        <nav aria-label="Навігація порталу" class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <a href="./index.html" class="inline-flex items-center gap-gutter-xs px-gutter-md py-2 rounded-full bg-on-header/10 hover:bg-on-header/20 text-on-header font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">grid_view</span>
+            <span data-design-text-token="label-md">Інструменти</span>
+          </a>
+
+          <a href="./dashboard.html" aria-current="page" class="inline-flex items-center gap-gutter-xs px-gutter-md py-2 rounded-full bg-clover-counsel text-dark-on-primary font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">bar_chart</span>
+            <span data-design-text-token="label-md">Аналітика 2026</span>
+          </a>
+
+          <button id="theme-toggle" type="button" data-component-id="button-theme-toggle" data-component-type="button" data-component-variant="with-icon" aria-pressed="false" class="inline-flex items-center gap-gutter-sm px-gutter-md py-2 rounded-full bg-on-header/10 hover:bg-on-header/20 border border-on-header/20 text-on-header font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header shrink-0">
+            <span id="theme-icon" class="material-symbols-outlined text-[18px]" aria-hidden="true">dark_mode</span>
+            <span id="theme-label" data-design-text-token="label-md">Темна тема</span>
+          </button>
+
+          <button id="logout-btn" type="button" data-component-id="button-logout" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center gap-gutter-sm px-gutter-md py-2 rounded-full bg-on-header/10 hover:bg-on-header/20 border border-on-header/20 text-on-header font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header shrink-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
+            <span data-design-text-token="label-md">Вийти</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-gutter-md md:px-gutter-lg lg:px-gutter-xl py-gutter-lg flex flex-col gap-gutter-lg">
+
+      <!-- Breadcrumb Back Navigation -->
+      <nav aria-label="Хлібні крихти" class="flex items-center gap-gutter-sm text-body-md">
+        <a href="./index.html" class="inline-flex items-center gap-1.5 font-label text-label-lg text-light-primary dark:text-dark-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary rounded">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
+          <span data-design-text-token="label-lg">Робочий простір</span>
+        </a>
+        <span class="text-light-outline dark:text-dark-outline" aria-hidden="true">/</span>
+        <span class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Аналітичний дашборд (2026)</span>
+      </nav>
+
+      <!-- Network Error Banner -->
+      <div id="error-banner" role="alert" class="hidden rounded-md bg-light-danger-container dark:bg-dark-danger-container border border-light-danger-border dark:border-dark-danger-border p-gutter-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-gutter-sm">
+        <div class="flex items-start gap-gutter-sm min-w-0">
+          <span class="material-symbols-outlined text-[20px] text-danger shrink-0 mt-0.5" aria-hidden="true">error</span>
+          <div class="flex flex-col gap-0.5 min-w-0">
+            <span class="font-label text-label-md text-light-on-danger-container dark:text-dark-on-danger-container">Помилка отримання даних із Google Таблиці</span>
+            <span id="error-message-text" class="font-body text-body-md text-light-on-danger-container dark:text-dark-on-danger-container break-words"></span>
+          </div>
+        </div>
+        <button id="retry-fetch-btn" type="button" class="inline-flex items-center justify-center gap-1.5 px-gutter-md py-2 rounded bg-danger text-on-danger font-label text-label-md hover:opacity-90 transition-opacity duration-state-change shrink-0">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">refresh</span>
+          <span>Спробувати ще раз</span>
+        </button>
+      </div>
+
+      <!-- Block A: Dashboard Page Header -->
+      <section aria-label="Заголовок дашборду" class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-gutter-md bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm">
+        <div class="flex flex-col gap-gutter-sm min-w-0">
+          <h1 class="font-headline text-headline-lg text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="headline-lg">Аналітичний дашборд Одеського відділу БПД (2026)</h1>
+          <div class="flex flex-wrap items-center gap-gutter-sm">
+            <span id="status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-light-info-container dark:bg-dark-info-container text-light-on-info-container dark:text-dark-on-info-container font-label text-label-md">
+              <span id="status-dot" class="w-2 h-2 rounded-full bg-info animate-pulse shrink-0" aria-hidden="true"></span>
+              <span id="status-period-label" data-design-text-token="label-md">Завантаження з Google Таблиці...</span>
+            </span>
+            <span id="last-updated-label" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant tabular-nums" data-design-text-token="body-md">Оновлено: —</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <button id="open-report-btn" type="button" disabled data-component-id="button-report" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm px-gutter-md py-2.5 rounded bg-success hover:bg-success-hover text-on-success font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">description</span>
+            <span data-design-text-token="label-lg">Повний звіт</span>
+          </button>
+
+          <button id="refresh-data-btn" type="button" data-component-id="button-refresh" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm px-gutter-md py-2.5 rounded bg-info hover:bg-info-hover text-on-info font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed">
+            <span id="refresh-icon" class="material-symbols-outlined text-[18px]" aria-hidden="true">refresh</span>
+            <span data-design-text-token="label-lg">Оновити дані</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Block B: Period & Bureau Filter Bar -->
+      <section aria-label="Фільтри періоду та бюро" class="bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col gap-gutter-md">
+        <!-- Row 1: Period -->
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-gutter-md pb-gutter-md border-b border-light-outline-variant dark:border-dark-outline-variant">
+          <div class="flex flex-wrap items-center gap-gutter-sm">
+            <span class="font-label text-label-md text-light-on-surface-variant dark:text-dark-on-surface-variant mr-1" data-design-text-token="label-md">Період:</span>
+            <button type="button" data-preset="year" aria-pressed="true" class="preset-btn px-3 py-1.5 rounded bg-info text-on-info font-label text-label-md transition-colors duration-state-change">Весь 2026</button>
+            <button type="button" data-preset="current-month" aria-pressed="false" class="preset-btn px-3 py-1.5 rounded bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high font-label text-label-md transition-colors duration-state-change">Поточний місяць</button>
+            <button type="button" data-preset="prev-month" aria-pressed="false" class="preset-btn px-3 py-1.5 rounded bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high font-label text-label-md transition-colors duration-state-change">Минулий місяць</button>
+            <button type="button" data-preset="q1" aria-pressed="false" class="preset-btn px-3 py-1.5 rounded bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high font-label text-label-md transition-colors duration-state-change">I кв.</button>
+            <button type="button" data-preset="q2" aria-pressed="false" class="preset-btn px-3 py-1.5 rounded bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high font-label text-label-md transition-colors duration-state-change">II кв.</button>
+            <button type="button" data-preset="q3" aria-pressed="false" class="preset-btn px-3 py-1.5 rounded bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high font-label text-label-md transition-colors duration-state-change">III кв.</button>
+            <button type="button" data-preset="q4" aria-pressed="false" class="preset-btn px-3 py-1.5 rounded bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high font-label text-label-md transition-colors duration-state-change">IV кв.</button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-gutter-sm shrink-0">
+            <div class="grid grid-cols-2 sm:flex sm:items-center gap-gutter-sm w-full sm:w-auto">
+              <label class="flex items-center gap-1.5 font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant">
+                <span>З:</span>
+                <input id="date-from" type="date" value="" class="w-full sm:w-auto px-2.5 py-1.5 rounded bg-light-background dark:bg-dark-background border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface dark:text-dark-on-surface font-body text-body-md tabular-nums focus:outline-none focus:border-info focus:ring-1 focus:ring-info">
+              </label>
+              <label class="flex items-center gap-1.5 font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant">
+                <span>По:</span>
+                <input id="date-to" type="date" value="" class="w-full sm:w-auto px-2.5 py-1.5 rounded bg-light-background dark:bg-dark-background border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface dark:text-dark-on-surface font-body text-body-md tabular-nums focus:outline-none focus:border-info focus:ring-1 focus:ring-info">
+              </label>
+            </div>
+            <button id="apply-dates-btn" type="button" class="w-full sm:w-auto px-gutter-md py-1.5 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-md transition-colors duration-state-change">
+              <span data-design-text-token="label-md">Застосувати</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2: Dynamic Bureau Filter -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-gutter-sm">
+          <div class="flex flex-wrap items-center gap-gutter-sm">
+            <span class="font-label text-label-md text-light-on-surface-variant dark:text-dark-on-surface-variant mr-1" data-design-text-token="label-md">Бюро:</span>
+            <div id="bureau-filter-group" role="group" aria-label="Фільтр бюро" class="inline-flex flex-wrap rounded bg-light-surface-container dark:bg-dark-surface-container p-1 gap-1">
+              <button type="button" data-bureau="" aria-pressed="true" class="bureau-btn px-3 py-1.5 rounded-sm bg-light-surface dark:bg-dark-surface text-light-on-surface dark:text-dark-on-surface shadow-sm font-label text-label-md transition-colors duration-state-change">Усі бюро</button>
+            </div>
+          </div>
+          <p id="bureau-indicator" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Відображаються дані по всьому відділу</p>
+        </div>
+      </section>
+
+      <!-- Block V: 8 Working Journals Navigation (4x2 Desktop/Tablet, 2x4 Mobile) -->
+      <section aria-label="Навігація по робочих журналах">
+        <div role="tablist" aria-label="Робочі журнали" class="grid grid-cols-2 sm:grid-cols-4 gap-gutter-sm">
+          <button type="button" role="tab" data-tab="bvpd" aria-selected="true" class="journal-tab px-3 py-2.5 rounded bg-info text-on-info font-label text-label-md text-center transition-colors duration-state-change">БВПД 2026</button>
+          <button type="button" role="tab" data-tab="bppd" aria-selected="false" class="journal-tab px-3 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md text-center transition-colors duration-state-change">БППД 2026</button>
+          <button type="button" role="tab" data-tab="dkp" aria-selected="false" class="journal-tab px-3 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md text-center transition-colors duration-state-change">ДКП</button>
+          <button type="button" role="tab" data-tab="journal2026" aria-selected="false" class="journal-tab px-3 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md text-center transition-colors duration-state-change">Журнал 2026</button>
+          <button type="button" role="tab" data-tab="terminations" aria-selected="false" class="journal-tab px-3 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md text-center transition-colors duration-state-change">Журнал припинення</button>
+          <button type="button" role="tab" data-tab="replacements" aria-selected="false" class="journal-tab px-3 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md text-center transition-colors duration-state-change">Журнал Замін</button>
+          <button type="button" role="tab" data-tab="ukrposhta" aria-selected="false" class="journal-tab px-3 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md text-center transition-colors duration-state-change">Реєстр Укрпошта</button>
+          <button type="button" role="tab" data-tab="poa" aria-selected="false" class="journal-tab px-3 py-2.5 rounded bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface-variant dark:text-dark-on-surface-variant hover:bg-light-surface-container dark:hover:bg-dark-surface-container font-label text-label-md text-center transition-colors duration-state-change">Довіреності 2026</button>
+        </div>
+      </section>
+
+      <!-- Block G: Active Journal Header & Bureau Summary Badges -->
+      <section aria-label="Інформація про активний журнал" class="flex flex-col md:flex-row md:items-center md:justify-between gap-gutter-sm">
+        <div class="flex flex-col gap-1">
+          <h2 id="journal-title" class="font-headline text-headline-md text-light-on-surface dark:text-dark-on-surface" data-design-text-token="headline-md">БВПД 2026</h2>
+          <p id="journal-subtitle" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Реєстрація звернень про надання безоплатної вторинної правничої допомоги</p>
+        </div>
+        <div id="bureau-badges" class="flex flex-wrap items-center gap-gutter-sm tabular-nums"></div>
+      </section>
+
+      <!-- Block D: 4 KPI Cards Grid -->
+      <section aria-label="Ключові показники ефективності">
+        <div id="kpi-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter-md items-stretch">
+          <article class="h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col justify-between gap-gutter-sm animate-pulse">
+            <div class="h-3.5 w-28 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-8 w-20 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-4 w-36 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+          </article>
+          <article class="h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col justify-between gap-gutter-sm animate-pulse">
+            <div class="h-3.5 w-28 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-8 w-20 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-4 w-36 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+          </article>
+          <article class="h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col justify-between gap-gutter-sm animate-pulse">
+            <div class="h-3.5 w-28 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-8 w-20 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-4 w-36 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+          </article>
+          <article class="h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col justify-between gap-gutter-sm animate-pulse">
+            <div class="h-3.5 w-28 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-8 w-20 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-4 w-36 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Block E: Executive Discipline Control Panel -->
+      <section id="discipline-panel" aria-label="Контроль виконавської дисципліни" class="hidden rounded-md p-gutter-md md:p-gutter-lg flex flex-col gap-gutter-md"></section>
+
+      <!-- Block Ye: 12-Column Visualizations Grid -->
+      <section aria-label="Візуалізації та графіки" class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-md">
+
+        <!-- Widget 1 (7 cols): Horizontal Bar Chart — Workload by Employee -->
+        <article class="lg:col-span-7 bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col gap-gutter-md">
+          <div class="flex flex-col gap-0.5">
+            <h3 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface" data-design-text-token="title-md">Навантаження за працівниками</h3>
+            <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Розподіл кількості записів за юристами (за спаданням)</p>
+          </div>
+          <div id="bar-chart-skeleton" class="flex flex-col gap-3 py-2 animate-pulse">
+            <div class="h-5 w-full rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-5 w-4/5 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-5 w-3/4 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-5 w-2/3 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="h-5 w-1/2 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+          </div>
+          <div id="bar-chart-wrapper" class="hidden relative w-full" style="height: 320px;">
+            <canvas id="bar-chart-canvas"></canvas>
+          </div>
+          <p id="bar-chart-empty" class="hidden text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant py-8 text-center">Немає даних для відображення</p>
+        </article>
+
+        <!-- Widget 2 (5 cols): Doughnut Chart — Indicator Structure -->
+        <article class="lg:col-span-5 bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col gap-gutter-md">
+          <div class="flex flex-col gap-gutter-sm">
+            <div>
+              <h3 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface" data-design-text-token="title-md">Структура показників</h3>
+              <p id="doughnut-subtitle" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Розподіл за статусом особи</p>
+            </div>
+            <div id="doughnut-slice-buttons" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <div id="doughnut-skeleton" class="flex flex-col items-center justify-center gap-gutter-md py-6 animate-pulse flex-1">
+            <div class="w-44 h-44 rounded-full bg-light-surface-container dark:bg-dark-surface-container"></div>
+            <div class="w-full grid grid-cols-2 gap-2">
+              <div class="h-6 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+              <div class="h-6 rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+            </div>
+          </div>
+
+          <div id="doughnut-content-wrap" class="hidden flex-col items-center justify-center gap-gutter-md flex-1">
+            <div class="relative w-52 h-52 flex items-center justify-center">
+              <canvas id="doughnut-chart-canvas"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                <span id="doughnut-total" class="font-headline text-headline-lg text-light-on-surface dark:text-dark-on-surface tabular-nums">0</span>
+                <span class="font-label text-label-sm text-light-on-surface-variant dark:text-dark-on-surface-variant">Всього</span>
+              </div>
+            </div>
+            <div id="doughnut-legend" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-body-md"></div>
+          </div>
+          <p id="doughnut-empty" class="hidden text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant py-8 text-center">Немає даних для обраного зрізу</p>
+        </article>
+
+        <!-- Widget 3 (12 cols): Monthly Dynamics Area Line Chart -->
+        <article id="line-chart-card" class="lg:col-span-12 bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-md md:p-gutter-lg shadow-sm flex flex-col gap-gutter-md">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-gutter-sm">
+            <div>
+              <h3 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface" data-design-text-token="title-md">Динаміка по місяцях (2026)</h3>
+              <p id="line-chart-subtitle" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Щомісячна кількість зареєстрованих записів</p>
+            </div>
+            <span id="line-peak-badge" class="hidden px-3 py-1 rounded-full bg-light-info-container dark:bg-dark-info-container text-light-on-info-container dark:text-dark-on-info-container font-label text-label-md tabular-nums self-start sm:self-auto">Пік: —</span>
+          </div>
+
+          <div id="line-chart-skeleton" class="h-60 w-full rounded bg-light-surface-container dark:bg-dark-surface-container animate-pulse"></div>
+          <div id="line-chart-canvas-wrap" class="hidden relative w-full h-64 sm:h-72">
+            <canvas id="line-chart-canvas"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <!-- Block Zh: Employee Workload Rating Table -->
+      <section aria-label="Зведена таблиця рейтингу працівників" class="bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md shadow-sm overflow-hidden flex flex-col">
+        <div class="p-gutter-md md:p-gutter-lg border-b border-light-outline-variant dark:border-dark-outline-variant flex flex-col md:flex-row md:items-center md:justify-between gap-gutter-md">
+          <div>
+            <h3 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface" data-design-text-token="title-md">Рейтинг навантаження працівників</h3>
+            <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Показники ефективності та частка у загальному обсязі</p>
+          </div>
+          <div class="relative w-full md:w-72">
+            <span class="material-symbols-outlined text-[18px] text-light-on-surface-variant dark:text-dark-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">search</span>
+            <input id="employee-search" type="search" placeholder="Пошук за ПІБ..." aria-label="Пошук за ПІБ" class="w-full pl-9 pr-3 py-2 rounded bg-light-background dark:bg-dark-background border border-light-outline-variant dark:border-dark-outline-variant text-light-on-surface dark:text-dark-on-surface placeholder:text-light-outline dark:placeholder:text-dark-outline font-body text-body-md focus:outline-none focus:border-info focus:ring-1 focus:ring-info">
+          </div>
+        </div>
+
+        <div id="table-skeleton" class="p-gutter-md md:p-gutter-lg flex flex-col gap-2.5 animate-pulse">
+          <div class="h-8 w-full rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+          <div class="h-8 w-full rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+          <div class="h-8 w-full rounded bg-light-surface-container dark:bg-dark-surface-container"></div>
+        </div>
+
+        <div id="rating-table-wrap" class="hidden overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead id="rating-thead" class="bg-light-surface-container dark:bg-dark-surface-container border-b border-light-outline-variant dark:border-dark-outline-variant"></thead>
+            <tbody id="rating-tbody" class="divide-y divide-light-outline-variant dark:divide-dark-outline-variant font-body text-body-md tabular-nums"></tbody>
+          </table>
+        </div>
+
+        <div id="table-empty-state" class="hidden py-gutter-xl text-center font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant">
+          Записів за вашим запитом не знайдено
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-light-outline-variant dark:border-dark-outline-variant mt-auto">
+      <div class="max-w-7xl mx-auto px-gutter-md md:px-gutter-lg lg:px-gutter-xl py-gutter-lg text-center">
+        <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant" data-design-text-token="body-md">Портал інструментів автоматизації роботи бюро правничої допомоги</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Block Z: Full Analytical Report Modal -->
+  <div id="report-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" class="hidden fixed inset-0 z-50 bg-dark-background/70 flex items-center justify-center p-gutter-md">
+    <div id="report-modal-panel" class="w-full max-w-5xl max-h-[90vh] bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-lg shadow-xl flex flex-col overflow-hidden">
+      <!-- Fixed Modal Header -->
+      <div class="p-gutter-md md:p-gutter-lg border-b border-light-outline-variant dark:border-dark-outline-variant flex flex-col lg:flex-row lg:items-center lg:justify-between gap-gutter-sm shrink-0">
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <h2 id="report-modal-title" class="font-headline text-headline-md text-light-on-surface dark:text-dark-on-surface" data-design-text-token="headline-md">Повний аналітичний звіт Одеського відділу БПД</h2>
+          <p id="report-modal-subtitle" class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant"></p>
+        </div>
+        <div id="report-modal-actions" class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <button id="export-csv-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-success hover:bg-success-hover text-on-success font-label text-label-md transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">download</span>
+            <span class="hidden sm:inline">Завантажити Excel (CSV)</span>
+            <span class="sm:hidden">Excel</span>
+          </button>
+          <button id="copy-report-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-info hover:bg-info-hover text-on-info font-label text-label-md transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">content_copy</span>
+            <span id="copy-report-label">Копіювати текст</span>
+          </button>
+          <button id="print-report-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-light-surface-container dark:bg-dark-surface-container text-light-on-surface dark:text-dark-on-surface border border-light-outline-variant dark:border-dark-outline-variant hover:bg-light-surface-container-high dark:hover:bg-dark-surface-container-high font-label text-label-md transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">print</span>
+            <span class="hidden sm:inline">Друк / Зберегти PDF</span>
+            <span class="sm:hidden">Друк</span>
+          </button>
+          <button id="close-report-btn" type="button" aria-label="Закрити вікно звіту" class="p-1.5 rounded hover:bg-light-surface-container dark:hover:bg-dark-surface-container text-light-on-surface-variant dark:text-dark-on-surface-variant transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[20px]" aria-hidden="true">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Report Body -->
+      <div id="report-modal-body" class="p-gutter-md md:p-gutter-lg overflow-y-auto flex flex-col gap-gutter-lg text-body-md">
+        <section id="report-section-1" class="flex flex-col gap-gutter-sm"></section>
+        <section id="report-section-2" class="flex flex-col gap-gutter-sm"></section>
+        <section id="report-section-3" class="flex flex-col gap-gutter-sm"></section>
+        <section id="report-section-4" class="flex flex-col gap-gutter-sm"></section>
+        <section id="report-section-5" class="flex flex-col gap-gutter-sm"></section>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/dashboard.js"></script>
+</body>
+</html>

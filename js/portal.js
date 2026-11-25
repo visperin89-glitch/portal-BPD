@@ -114,3 +114,17 @@
     filterTools();
   });
 })();
+
+(function () {
+  var badgeText = document.getElementById('portal-analytics-badge-text');
+  if (!badgeText) return;
+  try {
+    var cached = sessionStorage.getItem('bpd_dashboard_cache_2026_all_all_all');
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      if (parsed && parsed.bvpd && typeof parsed.bvpd.total === 'number') {
+        badgeText.textContent = 'Живі дані • ' + parsed.bvpd.total.toLocaleString('uk-UA') + ' заяв БВПД';
+      }
+    }
+  } catch (e) {}
+})();

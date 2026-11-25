@@ -84,7 +84,12 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-gutter-sm shrink-0">
+        <div class="flex flex-wrap items-center gap-gutter-sm shrink-0">
+          <a href="./dashboard.html" class="inline-flex items-center gap-gutter-xs px-gutter-md py-2 rounded-full bg-clover-counsel hover:bg-dark-primary-hover text-dark-on-primary font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header shrink-0">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">bar_chart</span>
+            <span data-design-text-token="label-md">Аналітика 2026</span>
+          </a>
+
           <button id="theme-toggle" type="button" data-component-id="button-theme-toggle" data-component-type="button" data-component-variant="with-icon" aria-pressed="false" class="inline-flex items-center gap-gutter-sm px-gutter-md py-2 rounded-full bg-on-header/10 hover:bg-on-header/20 border border-on-header/20 text-on-header font-label text-label-md transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-header shrink-0">
             <span id="theme-icon" class="material-symbols-outlined text-[18px]" aria-hidden="true">dark_mode</span>
             <span id="theme-label" data-design-text-token="label-md">Темна тема</span>
@@ -141,6 +146,31 @@
       <!-- 3-Column Service Cards Grid -->
       <section aria-label="Доступні інструменти">
         <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter-lg items-stretch">
+
+          <!-- Accent Card: Analytics Dashboard 2026 -->
+          <article data-category="Оцінювання" data-search="Аналітичний дашборд 2026 Статистика БВПД БППД ДКП контроль КІАС формування звітів Оцінювання" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border-2 border-light-primary/40 dark:border-dark-primary/40 rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">
+            <div class="flex flex-col gap-gutter-md">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <div class="w-11 h-11 rounded-md bg-light-primary-container dark:bg-dark-primary-container flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-[24px] text-light-on-primary-container dark:text-dark-on-primary-container" aria-hidden="true">bar_chart</span>
+                </div>
+                <span id="portal-analytics-badge" class="inline-flex items-center gap-1.5 font-label text-label-sm px-2.5 py-1 rounded-full bg-light-success-container dark:bg-dark-success-container text-light-on-success-container dark:text-dark-on-success-container tabular-nums" data-design-text-token="label-sm">
+                  <span class="w-1.5 h-1.5 rounded-full bg-success shrink-0" aria-hidden="true"></span>
+                  <span id="portal-analytics-badge-text">Живі дані • 2026</span>
+                </span>
+              </header>
+              <div class="flex flex-col gap-gutter-sm">
+                <h2 class="font-title text-title-md text-light-on-surface dark:text-dark-on-surface text-balance" data-design-text-token="title-md">Аналітичний дашборд (2026)</h2>
+                <p class="font-body text-body-md text-light-on-surface-variant dark:text-dark-on-surface-variant text-pretty" data-design-text-token="body-md">Статистика БВПД, БППД, ДКП, контроль КІАС та формування звітів.</p>
+              </div>
+            </div>
+            <footer class="pt-gutter-sm">
+              <a href="./dashboard.html" data-component-id="button-with-icon" data-component-type="button" data-component-variant="with-icon" class="inline-flex items-center justify-center gap-gutter-sm w-full px-gutter-md py-3 rounded bg-light-primary hover:bg-light-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover text-light-on-primary dark:text-dark-on-primary font-label text-label-lg transition-colors duration-state-change ease-state-change focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-light-primary dark:focus-visible:ring-dark-primary focus-visible:ring-offset-2">
+                <span data-design-text-token="label-lg">Відкрити аналітику</span>
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
+              </a>
+            </footer>
+          </article>
 
           <!-- Card 1 -->
           <article data-category="Документообіг" data-search="Генератор документів на БВПД Генератор документів для прийняття заяви на БВПД Формування комплекту документів під час приймання звернення про надання безоплатної вторинної правничої допомоги Документообіг" data-component-id="card-action" data-component-type="card" data-component-variant="action" class="tool-card h-full bg-light-surface dark:bg-dark-surface border border-light-outline-variant dark:border-dark-outline-variant rounded-md p-gutter-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,background-color,border-color] duration-state-change ease-state-change flex flex-col justify-between gap-gutter-lg">

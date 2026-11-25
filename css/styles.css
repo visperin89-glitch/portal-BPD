@@ -62,3 +62,76 @@ html:not(.bpd-authenticated) body {
     animation: none;
   }
 }
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@media print {
+  html,
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    overflow: visible !important;
+  }
+
+  #portal-app,
+  #auth-overlay,
+  #report-modal-actions {
+    display: none !important;
+  }
+
+  #report-modal {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    background: #FFFFFF !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #report-modal-panel {
+    max-width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+
+  #report-modal-body {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 12px 0 !important;
+  }
+
+  #report-modal,
+  #report-modal * {
+    color: #0F172A !important;
+    border-color: #CBD5E1 !important;
+  }
+
+  #report-modal thead,
+  #report-modal tr.report-total-row {
+    background: #F1F5F9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #report-modal table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #report-modal tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #report-modal section {
+    break-inside: avoid-page;
+  }
+}

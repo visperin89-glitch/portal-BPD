@@ -47,6 +47,10 @@ const EXPECTED_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab
     document.documentElement.classList.add('bpd-authenticated');
   }
 
+  window.bpdIsAuthenticated = function () {
+    return safeGet(AUTH_STORAGE_KEY) === EXPECTED_HASH;
+  };
+
   async function sha256Hex(text) {
     if (!window.crypto || !window.crypto.subtle) {
       throw new Error('Web Crypto API is unavailable in this context');
@@ -222,6 +226,7 @@ const EXPECTED_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab
           resetPasswordField();
           hideMessage();
           setPortalLocked(false);
+          window.dispatchEvent(new CustomEvent('bpd:authenticated'));
 
           overlay.classList.add('is-hiding');
           setTimeout(function () {
